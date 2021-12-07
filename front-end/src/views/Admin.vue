@@ -1,207 +1,148 @@
 <template lang="html">
-  <div class="">
-    <h1>The Admin Page!</h1>
-    <div class="heading">
-      <div class="circle">1</div>
-      <h2>Add an Item</h2>
-    </div>
-    <div class="add">
-      <div class="form">
-        <input v-model="title" placeholder="Title"><br><br>
-        <textarea v-model="description" placeholder="Description"></textarea>
+  <div class="mt-4">
+    <h1>Recipes</h1>
+    <div class="container">
+      <div class="recipes" v-for="recipe in recipes" :key="recipe._id">
+         <div class="item-row">
+           <img class="thumbnail" :src="recipe.path" />
+           <div class="item-info">
+              <div>{{recipe.name}}</div>
+              <div>Desc: {{recipe.description}}</div>
+           </div>
+           <div class="buttons ml-auto">
+             <router-link :to="'/editrecipe/' + recipe._id">
+             <button
+               type="button"
+               name="button"
+               class="btn btn-warning btn-cust"
+               >
+               Edit</button></router-link>
+               <button
+                 type="button"
+                 name="button"
+                 class="btn btn-danger btn-cust"
+                 @click="deleteRecipe(recipe._id)">
+                 Delete</button>
 
-        <p></p>
-        <input type="file" name="photo" @change="fileChanged">
-        <button @click="upload">Upload</button>
-      </div>
-      <div class="upload" v-if="addItem">
-        <h2>{{addItem.title}}</h2>
-        <img :src="addItem.path" />
+           </div>
+         </div>
       </div>
     </div>
 
-    <div class="heading">
-      <div class="circle">2</div>
-      <h2>Edit/Delete an Item</h2>
-    </div>
-    <div class="edit">
-      <div class="form">
-        <input v-model="findTitle" placeholder="Search">
-        <div class="suggestions" v-if="suggestions.length > 0">
-          <div class="suggestion" v-for="s in suggestions" :key="s.id" @click="selectItem(s)">{{s.title}}
+    <h1 class="mt-4 pt-3">People</h1>
+    <div class="container">
+      <div class="people" v-for="person in people" :key="person._id">
+        <div class="item-row">
+          <img class="thumbnail" :src="person.path" />
+          <div class="item-info">
+             <div>{{person.name}}</div>
+             <div>Hometown: {{person.hometown}}</div>
+          </div>
+          <div class="buttons ml-auto">
+            <router-link :to="'/editperson/' + person._id">
+            <button
+              type="button"
+              name="button"
+              class="btn btn-warning btn-cust"
+              >
+              Edit</button></router-link>
+              <button
+                type="button"
+                name="button"
+                class="btn btn-danger btn-cust"
+                @click="deletePerson(person._id)">
+                Delete</button>
+
           </div>
         </div>
       </div>
-      <div class="upload" v-if="findItem">
-        <input v-model="findItem.title"><br><br>
-        <textarea type="textarea" v-model="findItem.description" placeholder="description"></textarea>
-
-        <p></p>
-        <img :src="findItem.path" />
-      </div>
-      <div class="actions" v-if="findItem">
-        <button @click="deleteItem(findItem)">Delete</button>
-        <button @click="editItem(findItem)">Edit</button>
-      </div>
     </div>
-
   </div>
 </template>
 
 <script>
 import axios from 'axios';
-
 export default {
   name: 'Admin',
   data() {
     return {
-      title: "",
-      description: "",
-      file: null,
-      addItem: null,
-      items: [],
-      findTitle: "",
-      findItem: null,
+      recipes: [],
+      people: [],
     }
   },
   computed: {
-    suggestions() {
-      let items = this.items.filter(item => item.title.toLowerCase().startsWith(this.findTitle.toLowerCase()));
-      return items.sort((a, b) => a.title > b.title);
-    }
   },
   created() {
-    this.getItems();
+    this.getRecipes();
+    this.getPeople();
   },
   methods: {
-    fileChanged(event) {
-      this.file = event.target.files[0]
-    },
-    async upload() {
+    async getRecipes() {
       try {
-        const formData = new FormData();
-        formData.append('photo', this.file, this.file.name)
-        let r1 = await axios.post('/api/photos', formData);
-        let r2 = await axios.post('/api/items', {
-          title: this.title,
-          description: this.description,
-          path: r1.data.path
-        });
-        this.addItem = r2.data;
-      } catch (error) {
-        console.log(error);
-      }
-    },
-    async getItems() {
-      try {
-        let response = await axios.get("/api/items");
-        this.items = response.data;
+        let response = await axios.get("/api/recipes");
+        this.recipes = response.data;
         return true;
       } catch (error) {
         console.log(error);
       }
     },
-    async deleteItem(item) {
+    async getPeople () {
       try {
-        await axios.delete("/api/items/" + item._id);
-        this.findItem = null;
-        this.getItems();
+        let response = await axios.get("/api/people");
+        this.people = response.data;
         return true;
       } catch (error) {
         console.log(error);
       }
     },
-    async editItem(item) {
+    async deleteRecipe(id) {
       try {
-        await axios.put("/api/items/" + item._id, {
-          title: this.findItem.title,
-          description: this.findItem.description,
-        });
-        this.findItem = null;
-        this.getItems();
+        await axios.delete("/api/recipe/" + id)
+        this.getRecipes();
         return true;
       } catch (error) {
         console.log(error);
       }
     },
-    selectItem(item) {
-      this.findTitle = "";
-      this.findItem = item;
+    async deletePerson(id) {
+      try {
+        await axios.delete("/api/person/" + id)
+        this.getPeople();
+        return true;
+      } catch (error) {
+        console.log(error);
+      }
     },
   }
+
 }
 </script>
 
-<style scoped>
-
-input, button {
-  padding: 3px;
-  margin-right: 5px;
-}
-.suggestions {
-  width: 200px;
-  border: 1px solid #ccc;
+<style lang="css" scoped>
+.btn-cust{
+  margin: 1em .5em;
 }
 
-.suggestion {
-  min-height: 20px;
+.container{
+  box-shadow: .5px 1px 5px 0px lightgrey;
+  padding: 0px;
+  margin-left: 0px;
 }
 
-.suggestion:hover {
-  background-color: #5BDEFF;
-  color: #fff;
+.thumbnail{
+  height: 75px;
+  width: 75px;
+  margin-right: 1em;
 }
 
-.image h2 {
-  font-style: italic;
-  font-size: 1em;
-}
-
-.heading {
+.item-row{
   display: flex;
-  margin-bottom: 20px;
-  margin-top: 20px;
+  border-top: .5px solid lightgrey;
+  border-bottom: .5px solid lightgrey;
+
 }
 
-.heading h2 {
-  margin-top: 8px;
-  margin-left: 10px;
-}
-
-.add,
-.edit {
-  display: flex;
-}
-
-.circle {
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  padding: 8px;
-  background: #333;
-  color: #fff;
-  text-align: center
-}
-
-/* Form */
-input,
-textarea,
-select,
-button {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 1em;
-}
-
-.form {
-  margin-right: 50px;
-}
-
-/* Uploaded images */
-.upload h2 {
-  margin: 0px;
-}
-
-.upload img {
-  max-width: 300px;
+.item-info{
+  padding: .5em;
 }
 </style>
